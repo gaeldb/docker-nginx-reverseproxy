@@ -18,7 +18,7 @@ services:
     volumes:
       - ./nginx-conf/:/etc/nginx/conf.d/:ro
       - ./nginx-certbot/www/:/var/www/certbot/:ro
-      - ./nginx-cert/:/etc/nginx/ssl/:ro
+      - ./nginx-cert/:/etc/letsencrypt/:ro
     restart: always
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
