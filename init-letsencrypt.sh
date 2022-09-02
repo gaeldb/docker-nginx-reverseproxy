@@ -24,12 +24,12 @@ if [ -d "$data_path" ]; then
 fi
 
 echo "### Updating HTTP ($port_http) and HTTPS ($port_https) ports in docker-compose.yaml..."
-sed -i -e "s/{{ HTTP_PORT }}/$port_http" docker-compose.yaml
-sed -i -e "s/{{ HTTPS_PORT }}/$port_https" docker-compose.yaml
+sed -i -e "s/{{ HTTP_PORT }}/$port_http/g" docker-compose.yaml
+sed -i -e "s/{{ HTTPS_PORT }}/$port_https/g" docker-compose.yaml
 echo
 
 echo "### Updating reverse-proxy config for HTTP ($port_http) and HTTPS ($port_https) ..."
-sed -i -e "s/{{ SERVER_URL }}/$domains" "$nginx_path/app.conf"
+sed -i -e "s/{{ SERVER_URL }}/$domains/g" "$nginx_path/app.conf"
 echo
 
 if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
