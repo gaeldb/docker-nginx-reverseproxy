@@ -6,9 +6,11 @@ staging=0 # Set to 1 if you're testing your setup to avoid hitting request limit
 port_http=80
 port_https=443
 rsa_key_size=4096
+
+rsa_key_size=4096
 data_path="./nginx-certbot"
-cert_path="./nginx-cert"
 nginx_path="./nginx-conf"
+cert_path="./nginx-cert"
 
 
 if ! [ -x "$(command -v docker-compose)" ]; then
@@ -32,16 +34,17 @@ echo "### Updating reverse-proxy config for HTTP ($port_http) and HTTPS ($port_h
 sed -i -e "s/{{ SERVER_URL }}/$domains/g" "$nginx_path/app.conf"
 echo
 
-if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
+if [ ! -e "$cert_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$cert_path/conf/ssl-dhparams.pem" ]; then
   echo "### Downloading recommended TLS parameters ..."
-  mkdir -p "$data_path/conf"
-  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$data_path/conf/options-ssl-nginx.conf"
-  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/conf/ssl-dhparams.pem"
+  mkdir -p "$cert_path/conf"
+  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$cert_path/conf/options-ssl-nginx.conf"
+  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$cert_path/conf/ssl-dhparams.pem"
   echo
 fi
 
 echo "### Creating dummy certificate for $domains ..."
 path="/etc/letsencrypt/live/$domains"
+mkdir -p "$cert_path/live/$domains"
 mkdir -p "$data_path/conf/live/$domains"
 docker-compose run --rm --entrypoint "\
   openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
@@ -50,18 +53,16 @@ docker-compose run --rm --entrypoint "\
     -subj '/CN=localhost'" certbot
 echo
 
-
-echo "### Starting reverse-proxy ..."
+echo "### Starting nginx ..."
 docker-compose up --force-recreate -d reverse-proxy
 echo
 
 echo "### Deleting dummy certificate for $domains ..."
 docker-compose run --rm --entrypoint "\
-  rm -Rf $cert_path/live/$domains && \
-  rm -Rf $cert_path/archive/$domains && \
-  rm -Rf $cert_path/renewal/$domains.conf" certbot
+  rm -Rf /etc/letsencrypt/live/$domains && \
+  rm -Rf /etc/letsencrypt/archive/$domains && \
+  rm -Rf /etc/letsencrypt/renewal/$domains.conf" certbot
 echo
-
 
 echo "### Requesting Let's Encrypt certificate for $domains ..."
 #Join $domains to -d args

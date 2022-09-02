@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
 
-  my-service:
+  app:
     image: traefik/whoami
     environment:
       - WHOAMI_NAME=my-service.local
@@ -17,10 +17,12 @@ services:
       - "{{ HTTPS_PORT }}:443"
     volumes:
       - ./nginx-conf/:/etc/nginx/conf.d/:ro
-      - ./nginx-certbot/www/:/var/www/certbot/:ro
+      - ./nginx-certbot/:/var/www/certbot/:ro
       - ./nginx-cert/:/etc/letsencrypt/:ro
     restart: always
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    depends_on:
+      - app
 
   certbot:
     image: certbot/certbot:latest
