@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+
+  my-service:
+    image: traefik/whoami
+    environment:
+      - WHOAMI_NAME=my-service.local
+      - WHOAMI_PORT_NUMBER=8080
+    expose:
+      - "8080"
+
+  reverse-proxy:
+    image: nginx:latest
+    ports:
+      - "8888:80"
+      - "8443:443"
+    volumes:
+      - ./nginx-conf/:/etc/nginx/conf.d/:ro
+      - ./nginx-certbot/www/:/var/www/certbot/:ro
+      - ./nginx-cert/:/etc/nginx/ssl/:ro
+    restart: always
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./nginx-certbot/:/var/www/certbot/:rw
+      - ./nginx-cert/:/etc/letsencrypt/:rw
